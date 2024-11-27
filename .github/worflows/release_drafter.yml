@@ -1,0 +1,43 @@
+name: Release Drafter
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - closed
+
+jobs:
+  draft-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Get latest tag version
+        id: get_version
+        run: |
+          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+          VERSION=${LATEST_TAG#v}
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+
+      - name: Increment version
+        run: |
+          NEXT_VERSION="v1.0.0" # Replace with logic to calculate the next version
+          echo "VERSION=$NEXT_VERSION" >> $GITHUB_ENV
+          echo "Version: $NEXT_VERSION"
+
+      - name: Run Release Drafter
+        uses: release-drafter/release-drafter@v6.0.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ env.VERSION }}
